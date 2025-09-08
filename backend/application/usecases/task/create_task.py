@@ -17,7 +17,8 @@ class CreateTaskService:
             attachment: bytes | bytearray,
             checklist: list = [],
             owner: str = None,
-            done: bool = False):
+            done: bool = False,
+            order: int = 0):
 
         task_list = self.task_list_repository.get_by_id(list_id)
         if not task_list:
@@ -30,7 +31,8 @@ class CreateTaskService:
             attachment=attachment,
             checklist=checklist,
             owner=owner,
-            done=done
+            done=done,
+            order=order
         )
 
         self.task_repository.save(task)

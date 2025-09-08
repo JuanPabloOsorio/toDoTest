@@ -67,7 +67,10 @@ async def get_tasks_of_list(list_id: str, get_task_repo: TaskRepository = Depend
 @router.post("/")
 async def create_list(new_list: TaskListCreateSchema, get_task_list_repo: TaskListRepository = Depends(get_task_list_repository)):
     try:
-        created_task_list = CreateTaskListService(get_task_list_repo).execute(new_list.name)
+        created_task_list = CreateTaskListService(get_task_list_repo).execute(
+            name=new_list.name, 
+            order=new_list.order
+        )
         return JSONResponse(
             content={"successful": True, "data": created_task_list.to_dict()},
             status_code=status.HTTP_201_CREATED
@@ -82,7 +85,7 @@ async def create_list(new_list: TaskListCreateSchema, get_task_list_repo: TaskLi
 @router.put('/{list_id}')
 async def update_list(list_id: str, updates: TaskListUpdateSchema, get_task_list_repo: TaskListRepository = Depends(get_task_list_repository)):
     try:
-        updated_task_list = UpdateTaskListService(get_task_list_repo).execute(list_id, updates.model_dump())
+        updated_task_list = UpdateTaskListService(get_task_list_repo).execute(list_id, updates.model_dump(exclude_none=True))
         return JSONResponse(
             content={"successful": True, "data": updated_task_list.to_dict()},
             status_code=status.HTTP_200_OK

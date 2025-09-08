@@ -14,6 +14,7 @@ class Task:
             id: str = None,
             owner: str = None,
             done: bool = False,
+            order: int = 0,
     ):
         if title in ["", None]:
             raise Exception("Title of the Task could not be empty")
@@ -30,9 +31,11 @@ class Task:
         self.checklist = checklist if checklist else []
         self.owner = owner if owner else 'default'
         self.done = done if done else False
+        self.order = order
     
     def update(self, **kwargs):
         for key, value in kwargs.items():
+            # Only update attributes that exist on the object
             if not hasattr(self, key):
                 continue
             if key == "title":
@@ -41,6 +44,7 @@ class Task:
             if key == "list_id":
                 if value in ["", None]:
                     raise Exception(f"List ID of the Task could not be empty")
+            # Skip updating immutable fields
             if key in ["created_at", "id"]:
                 continue
             if key == "owner":
@@ -58,6 +62,9 @@ class Task:
             if key == "checklist":
                 if value and not isinstance(value, list):
                     raise Exception(f"Checklist of the Task must be a list")
+            if key == "order":
+                if value is not None and not isinstance(value, int):
+                    raise Exception(f"Order of the Task must be an integer")
             if key == "description":
                 if value is None:
                     value = ""
@@ -83,20 +90,35 @@ class Task:
     @staticmethod
     def from_dict(data: dict):
         if data.get('created_at'):
-            created_at= datetime.fromisoformat(data['created_at'])
+            try:
+                created_at = datetime.strptime(data['created_at'], '%Y-%m-%d')
+            except ValueError:
+                # Fallback to ISO format if the simple format fails
+                created_at = datetime.fromisoformat(data['created_at'])
         else:
             raise ValueError("created_at is required in data")
+        
+        # Parse due_date as YYYY-MM-DD format
+        due_date = None
+        if data.get('due_date'):
+            try:
+                due_date = datetime.strptime(data['due_date'], '%Y-%m-%d')
+            except ValueError:
+                # Fallback to ISO format if the simple format fails
+                due_date = datetime.fromisoformat(data['due_date'])
+                
         return Task(
             title=data['title'],
             description=data.get('description'),
             list_id=data.get('list_id'),
-            due_date=datetime.fromisoformat(data['due_date']) if data.get('due_date') else None,
+            due_date=due_date,
             attachment=data.get('attachment').encode('utf-8') if data.get('attachment') else None,
             checklist=data.get('checklist', []),
             created_at=created_at,
             owner=data.get('owner', 'default'),
             id=data.get('id'),
-            done=data.get('done', False)
+            done=data.get('done', False),
+            order=data.get('order', 0)
         )
 
     def to_dict(self):
@@ -108,10 +130,11 @@ class Task:
             "title": self.title,
             "list_id": self.list_id,
             "description": self.description,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "created_at": self.created_at.strftime('%Y-%m-%d') if self.created_at else None,
+            "due_date": self.due_date.strftime('%Y-%m-%d') if self.due_date else None,
             "attachment": self.attachment.decode('utf-8') if self.attachment else None,
             "checklist": self.checklist,
             "owner": self.owner,
-            "done": self.done
+            "done": self.done,
+            "order": self.order
         }

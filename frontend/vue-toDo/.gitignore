@@ -39,7 +39,8 @@ coverage
 
 # TODO: where does this rule come from?
 docs/_book
-
+.vscode/*
+node_modules/
 # TODO: where does this rule come from?
 test/
 
